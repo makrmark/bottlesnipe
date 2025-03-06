@@ -1,94 +1,107 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sniper Game</title>
     <style>
-        body { margin: 0; overflow: hidden; }
-#crosshairs {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    display: none; /* Hidden by default, shown when zoomed via JavaScript */
-    pointer-events: none; /* Ensures it doesn’t interfere with mouse events */
-}
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
 
-#crosshairs .circle {
-    position: absolute;
-    width: 200px;
-    height: 200px;
-    border: 10px solid grey; /* Thick grey border for the telescopic sight */
-    border-radius: 50%; /* Makes it a circle */
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%); /* Centers it within #crosshairs */
-}
+        #crosshairs {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: none;
+            /* Hidden by default, shown when zoomed via JavaScript */
+            pointer-events: none;
+            /* Ensures it doesn’t interfere with mouse events */
+        }
 
-#crosshairs .vertical {
-    position: absolute;
-    width: 2px;
-    height: 200px; /* Matches the circle’s diameter */
-    background: black;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%); /* Centers it */
-}
+        #crosshairs .circle {
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            border: 10px solid grey;
+            /* Thick grey border for the telescopic sight */
+            border-radius: 50%;
+            /* Makes it a circle */
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            /* Centers it within #crosshairs */
+        }
 
-#crosshairs .horizontal {
-    position: absolute;
-    width: 200px; /* Matches the circle’s diameter */
-    height: 2px;
-    background: black;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%); /* Centers it */
-}
-#winDialog {
-    display: none; /* Hidden initially */
-    position: fixed; /* Stays in place over the canvas */
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%); /* Centers the dialog */
-    background: white;
-    padding: 20px;
-    border: 1px solid black;
-    z-index: 1000; /* Ensures it’s above the Three.js canvas */
-    text-align: center;
-}
+        #crosshairs .vertical {
+            position: absolute;
+            width: 2px;
+            height: 200px;
+            /* Matches the circle’s diameter */
+            background: black;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            /* Centers it */
+        }
+
+        #crosshairs .horizontal {
+            position: absolute;
+            width: 200px;
+            /* Matches the circle’s diameter */
+            height: 2px;
+            background: black;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            /* Centers it */
+        }
+
+        #winDialog {
+            display: none;
+            /* Hidden initially */
+            position: fixed;
+            /* Stays in place over the canvas */
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            /* Centers the dialog */
+            background: white;
+            padding: 20px;
+            border: 1px solid black;
+            z-index: 1000;
+            /* Ensures it’s above the Three.js canvas */
+            text-align: center;
+        }
     </style>
 </head>
+
 <body>
 
-<div id="crosshairs">
-    <div class="circle"></div>
-    <div class="vertical"></div>
-    <div class="horizontal"></div>
-</div>
-<div id="winDialog">
-    <h1>You Won!</h1>
-    <button id="restartButton">Restart Game</button>
-</div>
-
-    <!-- Load Three.js from CDN -->
-    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script> -->
-<!--	<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r120/three.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/pointerlockcontrols@1.0.2/PointerLockControls.min.js"></script>
--->
-
-<script type="importmap">
+    <div id="crosshairs">
+        <div class="circle"></div>
+        <div class="vertical"></div>
+        <div class="horizontal"></div>
+    </div>
+    <div id="winDialog">
+        <h1>You Won!</h1>
+        <button id="restartButton">Restart Game</button>
+    </div>
+    <script type="importmap">
     {
         "imports": {
             "three": "https://unpkg.com/three@0.156.0/build/three.module.js",
             "three/addons/": "https://unpkg.com/three@0.156.0/examples/jsm/"
         }
     }
-</script>
+    </script>
 
-<script type="module">
-	import * as THREE from 'three';
-    	import {PointerLockControls} from 'three/addons/controls/PointerLockControls.js';
+    <script type="module">
+        import * as THREE from 'three';
+        import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 
         const scene = new THREE.Scene();
         scene.fog = new THREE.Fog(0x87ceeb, 0, 100); // Light blue fog for depth
@@ -183,28 +196,28 @@
             return bottleGroup;
         }
 
-// Define initial bottle positions
-const bottlePositions = [
-    { x: 0, z: -10 },
-    { x: 5, z: -10 },
-    { x: 10, z: -10 }
-];
+        // Define initial bottle positions
+        const bottlePositions = [
+            { x: 0, z: -10 },
+            { x: 5, z: -10 },
+            { x: 10, z: -10 }
+        ];
 
-// Global bottles array
-let bottles = [];
+        // Global bottles array
+        let bottles = [];
 
-// Function to initialize or reset bottles
-function initBottles() {
-    // Remove any existing bottles from the scene
-    bottles.forEach(bottle => scene.remove(bottle));
-    bottles = []; // Clear the array
-    // Create new bottles at initial positions
-    bottlePositions.forEach(pos => {
-        const bottle = createBottle(pos.x, pos.z);
-        scene.add(bottle);
-        bottles.push(bottle);
-    });
-}
+        // Function to initialize or reset bottles
+        function initBottles() {
+            // Remove any existing bottles from the scene
+            bottles.forEach(bottle => scene.remove(bottle));
+            bottles = []; // Clear the array
+            // Create new bottles at initial positions
+            bottlePositions.forEach(pos => {
+                const bottle = createBottle(pos.x, pos.z);
+                scene.add(bottle);
+                bottles.push(bottle);
+            });
+        }
 
         // Zoom functionality
         let isZoomed = false;
@@ -216,138 +229,139 @@ function initBottles() {
             if (event.key === 'Shift') isZoomed = false;
         });
 
-const clouds = [];
-for (let i = 0; i < 5; i++) {
-    const cloud = createCloud(
-        Math.random() * 50 - 25, // x: -25 to 25
-        20 + Math.random() * 10, // y: 20 to 30
-        -30 + Math.random() * 20 // z: -30 to -10
-    );
-    scene.add(cloud);
-    clouds.push(cloud);
-}
-
-function createCloud(x, y, z) {
-    // Create a group to hold the cloud parts
-    const cloudGroup = new THREE.Group();
-
-    // Use a whiter material
-    const cloudMaterial = new THREE.MeshToonMaterial({ color: 0xFFFFFF });
-
-    // Add more spheres for fluffiness
-    for (let i = -2; i <= 2; i++) {
-        for (let j = -2; j <= 2; j++) {
-            const sphere = new THREE.Mesh(
-                new THREE.SphereGeometry(1.5, 16, 16), // Larger spheres (radius 1.5)
-                cloudMaterial
+        const clouds = [];
+        for (let i = 0; i < 5; i++) {
+            const cloud = createCloud(
+                Math.random() * 50 - 25, // x: -25 to 25
+                20 + Math.random() * 10, // y: 20 to 30
+                -30 + Math.random() * 20 // z: -30 to -10
             );
-            // Randomize positions for a fluffier look
-            sphere.position.set(
-                i * 2 + (Math.random() - 0.5),
-                j * 2 + (Math.random() - 0.5),
-                (Math.random() - 0.5)
-            );
-            cloudGroup.add(sphere);
+            scene.add(cloud);
+            clouds.push(cloud);
         }
-    }
 
-    // Position the cloud in the scene
-    cloudGroup.position.set(x, y, z);
+        function createCloud(x, y, z) {
+            // Create a group to hold the cloud parts
+            const cloudGroup = new THREE.Group();
 
-    // Scale the entire cloud to make it bigger
-    cloudGroup.scale.set(1.5, 1.5, 1.5);
+            // Use a whiter material
+            const cloudMaterial = new THREE.MeshToonMaterial({ color: 0xFFFFFF });
 
-    return cloudGroup;
-}
-
-	// Shooting mechanism
-renderer.domElement.addEventListener('click', () => {
-    if (controls.isLocked) {
-        const raycaster = new THREE.Raycaster();
-        raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
-        const intersects = raycaster.intersectObjects(bottles, true);
-        if (intersects.length > 0) {
-            const hitObject = intersects[0].object;
-            const hitBottle = hitObject.parent;
-            if (bottles.includes(hitBottle)) {
-                const position = hitBottle.position.clone();
-                scene.remove(hitBottle);
-                bottles.splice(bottles.indexOf(hitBottle), 1);
-                const shardGroup = createShards(position.x, position.y, position.z);
-                shardGroup.lifespan = 60; // Remove after 60 frames
-                scene.add(shardGroup);
-                shards.push(shardGroup);
-		if (bottles.length === 0) {
-                    document.getElementById('winDialog').style.display = 'block';
-                    controls.unlock(); // Release pointer lock for button interaction
+            // Add more spheres for fluffiness
+            for (let i = -2; i <= 2; i++) {
+                for (let j = -2; j <= 2; j++) {
+                    const sphere = new THREE.Mesh(
+                        new THREE.SphereGeometry(1.5, 16, 16), // Larger spheres (radius 1.5)
+                        cloudMaterial
+                    );
+                    // Randomize positions for a fluffier look
+                    sphere.position.set(
+                        i * 2 + (Math.random() - 0.5),
+                        j * 2 + (Math.random() - 0.5),
+                        (Math.random() - 0.5)
+                    );
+                    cloudGroup.add(sphere);
                 }
             }
+
+            // Position the cloud in the scene
+            cloudGroup.position.set(x, y, z);
+
+            // Scale the entire cloud to make it bigger
+            cloudGroup.scale.set(1.5, 1.5, 1.5);
+
+            return cloudGroup;
         }
-    }
-});
 
-document.getElementById('restartButton').addEventListener('click', () => {
-    initBottles(); // Recreate bottles
-    document.getElementById('winDialog').style.display = 'none'; // Hide dialog
-});
+        // Shooting mechanism
+        renderer.domElement.addEventListener('click', () => {
+            if (controls.isLocked) {
+                const raycaster = new THREE.Raycaster();
+                raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+                const intersects = raycaster.intersectObjects(bottles, true);
+                if (intersects.length > 0) {
+                    const hitObject = intersects[0].object;
+                    const hitBottle = hitObject.parent;
+                    if (bottles.includes(hitBottle)) {
+                        const position = hitBottle.position.clone();
+                        scene.remove(hitBottle);
+                        bottles.splice(bottles.indexOf(hitBottle), 1);
+                        const shardGroup = createShards(position.x, position.y, position.z);
+                        shardGroup.lifespan = 60; // Remove after 60 frames
+                        scene.add(shardGroup);
+                        shards.push(shardGroup);
+                        if (bottles.length === 0) {
+                            document.getElementById('winDialog').style.display = 'block';
+                            controls.unlock(); // Release pointer lock for button interaction
+                        }
+                    }
+                }
+            }
+        });
 
-function createShards(x, y, z) {
-    const shardGroup = new THREE.Group();
-    const shardMaterial = new THREE.MeshToonMaterial({ 
-        color: 0x00ffff, 
-        transparent: true, 
-        opacity: 0.8 
-    });
-    for (let i = 0; i < 10; i++) {
-        const shard = new THREE.Mesh(
-            new THREE.TetrahedronGeometry(0.2),
-            shardMaterial
-        );
-        shard.position.set(
-            x + Math.random() * 0.5 - 0.25,
-            y + Math.random() * 0.5 - 0.25,
-            z + Math.random() * 0.5 - 0.25
-        );
-        shard.velocity = new THREE.Vector3(
-            (Math.random() - 0.5) * 0.1,
-            Math.random() * 0.1 + 0.05,
-            (Math.random() - 0.5) * 0.1
-        );
-        shardGroup.add(shard);
-    }
-    return shardGroup;
-}
+        document.getElementById('restartButton').addEventListener('click', () => {
+            initBottles(); // Recreate bottles
+            document.getElementById('winDialog').style.display = 'none'; // Hide dialog
+        });
+
+        function createShards(x, y, z) {
+            const shardGroup = new THREE.Group();
+            const shardMaterial = new THREE.MeshToonMaterial({
+                color: 0x00ffff,
+                transparent: true,
+                opacity: 0.8
+            });
+            for (let i = 0; i < 10; i++) {
+                const shard = new THREE.Mesh(
+                    new THREE.TetrahedronGeometry(0.2),
+                    shardMaterial
+                );
+                shard.position.set(
+                    x + Math.random() * 0.5 - 0.25,
+                    y + Math.random() * 0.5 - 0.25,
+                    z + Math.random() * 0.5 - 0.25
+                );
+                shard.velocity = new THREE.Vector3(
+                    (Math.random() - 0.5) * 0.1,
+                    Math.random() * 0.1 + 0.05,
+                    (Math.random() - 0.5) * 0.1
+                );
+                shardGroup.add(shard);
+            }
+            return shardGroup;
+        }
 
         // Animation loop
-const shards = [];
-function animate() {
-    requestAnimationFrame(animate);
-    camera.fov = isZoomed ? 20 : 75;
-    crosshairs.style.display = isZoomed ? 'block' : 'none';
+        const shards = [];
+        function animate() {
+            requestAnimationFrame(animate);
+            camera.fov = isZoomed ? 20 : 75;
+            crosshairs.style.display = isZoomed ? 'block' : 'none';
 
-    clouds.forEach(cloud => {
-        cloud.position.x += 0.05;
-        if (cloud.position.x > 30) {
-            cloud.position.x = -30;
+            clouds.forEach(cloud => {
+                cloud.position.x += 0.05;
+                if (cloud.position.x > 30) {
+                    cloud.position.x = -30;
+                }
+            });
+            shards.forEach(shardGroup => {
+                shardGroup.children.forEach(shard => {
+                    shard.velocity.y -= 0.001; // Gravity
+                    shard.position.add(shard.velocity);
+                });
+                shardGroup.lifespan -= 1;
+                if (shardGroup.lifespan <= 0) {
+                    scene.remove(shardGroup);
+                    shards.splice(shards.indexOf(shardGroup), 1);
+                }
+            });
+            camera.updateProjectionMatrix();
+            renderer.render(scene, camera);
         }
-    });
-    shards.forEach(shardGroup => {
-        shardGroup.children.forEach(shard => {
-            shard.velocity.y -= 0.001; // Gravity
-            shard.position.add(shard.velocity);
-        });
-        shardGroup.lifespan -= 1;
-        if (shardGroup.lifespan <= 0) {
-            scene.remove(shardGroup);
-            shards.splice(shards.indexOf(shardGroup), 1);
-        }
-    });
-    camera.updateProjectionMatrix();
-    renderer.render(scene, camera);
-}
-	// Call at game start
-	initBottles();
+        // Call at game start
+        initBottles();
         animate();
     </script>
 </body>
+
 </html>
