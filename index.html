@@ -97,6 +97,19 @@
             padding: 10px 20px;
             font-size: 16px;
         }
+
+        #zoomHint {
+            position: fixed;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            z-index: 1000;
+        }
     </style>
 </head>
 
@@ -119,6 +132,9 @@
         <p><strong>Mouse Click:</strong> Fire Weapon</p>
         <button id="startButton">Start Game</button>
     </div>
+    <div id="zoomHint" style="display: none;">
+        SHIFT to zoom
+    </div>
     <script type="importmap">
     {
         "imports": {
@@ -131,12 +147,13 @@
     <script type="module">
         import * as THREE from 'three';
         import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
+        import { TextureLoader } from 'three';
 
         const scene = new THREE.Scene();
         scene.fog = new THREE.Fog(0x87ceeb, 0, 100); // Light blue fog for depth
 
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.set(0, 1.7, 20); // Player height at ~1.7m, positioned away from fence
+        camera.position.set(0, 2.5, 20); // Player height at ~2.5m, positioned away from fence
 
         const renderer = new THREE.WebGLRenderer();
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -154,29 +171,27 @@
         const ambientLight = new THREE.AmbientLight(0x404040);
         scene.add(ambientLight);
 
+        const textureLoader = new TextureLoader();
+
+        // Load textures from Polyhaven
+        const grassTexture = textureLoader.load('https://cdn.polyhaven.com/asset_img/primary/coast_sand_rocks_02.png?height=760');
+        grassTexture.wrapS = grassTexture.wrapT = THREE.RepeatWrapping;
+        grassTexture.repeat.set(10, 10);
+
+        const woodTexture = textureLoader.load('https://cdn.polyhaven.com/asset_img/primary/dark_wood.png?height=760');
+        const barkTexture = textureLoader.load('https://cdn.polyhaven.com/asset_img/primary/bark_willow_02.png?height=760');
+        const foliageTexture = textureLoader.load('https://cdn.polyhaven.com/asset_img/primary/moss_wood.png?height=760');
+
         // Ground (lush green grass)
-        const groundGeometry = new THREE.PlaneGeometry(100, 100);
-        const groundMaterial = new THREE.MeshToonMaterial({ color: 0x00ff00 });
+        const groundGeometry = new THREE.PlaneGeometry(200, 200);
+        const groundMaterial = new THREE.MeshStandardMaterial({ map: grassTexture });
         const ground = new THREE.Mesh(groundGeometry, groundMaterial);
         ground.rotation.x = -Math.PI / 2; // Horizontal
         scene.add(ground);
 
-        // Rolling hills
-        const hillGeometry = new THREE.SphereGeometry(10, 32, 32);
-        const hillMaterial = new THREE.MeshToonMaterial({ color: 0x00ff00 });
-        const hill1 = new THREE.Mesh(hillGeometry, hillMaterial);
-        hill1.position.set(20, 5, -30);
-        hill1.scale.set(1, 0.5, 1); // Flatten to resemble hills
-        scene.add(hill1);
-
-        const hill2 = new THREE.Mesh(hillGeometry, hillMaterial);
-        hill2.position.set(-20, 5, -40);
-        hill2.scale.set(1, 0.5, 1);
-        scene.add(hill2);
-
         // Fence posts
         const postGeometry = new THREE.BoxGeometry(0.5, 5, 0.5);
-        const postMaterial = new THREE.MeshToonMaterial({ color: 0x8B4513 }); // Brown wood
+        const postMaterial = new THREE.MeshStandardMaterial({ map: woodTexture });
         const post1 = new THREE.Mesh(postGeometry, postMaterial);
         post1.position.set(0, 2.5, -10);
         scene.add(post1);
@@ -189,9 +204,18 @@
         post3.position.set(10, 2.5, -10);
         scene.add(post3);
 
+        // Additional fence posts
+        const post4 = new THREE.Mesh(postGeometry, postMaterial);
+        post4.position.set(-5, 2.5, -10);
+        scene.add(post4);
+
+        const post5 = new THREE.Mesh(postGeometry, postMaterial);
+        post5.position.set(15, 2.5, -10);
+        scene.add(post5);
+
         // Fence rails
         const railGeometry = new THREE.BoxGeometry(5, 0.2, 0.2);
-        const railMaterial = new THREE.MeshToonMaterial({ color: 0x8B4513 });
+        const railMaterial = new THREE.MeshStandardMaterial({ map: woodTexture });
         const rail1 = new THREE.Mesh(railGeometry, railMaterial);
         rail1.position.set(2.5, 4, -10);
         scene.add(rail1);
@@ -208,18 +232,111 @@
         rail4.position.set(7.5, 2, -10);
         scene.add(rail4);
 
+        // Additional fence rails
+        const rail5 = new THREE.Mesh(railGeometry, railMaterial);
+        rail5.position.set(-2.5, 4, -10);
+        scene.add(rail5);
+
+        const rail6 = new THREE.Mesh(railGeometry, railMaterial);
+        rail6.position.set(12.5, 4, -10);
+        scene.add(rail6);
+
+        const rail7 = new THREE.Mesh(railGeometry, railMaterial);
+        rail7.position.set(-2.5, 2, -10);
+        scene.add(rail7);
+
+        const rail8 = new THREE.Mesh(railGeometry, railMaterial);
+        rail8.position.set(12.5, 2, -10);
+        scene.add(rail8);
+
+        // Trees with trunks
+        function createTree(x, z, scale) {
+            const treeGroup = new THREE.Group();
+            const trunkGeometry = new THREE.CylinderGeometry(0.5, 0.5, 5 * scale, 32);
+            const trunkMaterial = new THREE.MeshStandardMaterial({ map: barkTexture });
+            const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
+            trunk.position.set(0, 2.5 * scale, 0); // Bottom at y=0, top at y=5*scale in group coords
+            treeGroup.add(trunk);
+
+            const foliageGeometry = new THREE.SphereGeometry(3 * scale, 32, 32);
+            const foliageMaterial = new THREE.MeshStandardMaterial({ map: foliageTexture });
+            const foliage = new THREE.Mesh(foliageGeometry, foliageMaterial);
+            foliage.position.set(0, 5 * scale, 0); // Center at y=5*scale
+            treeGroup.add(foliage);
+
+            treeGroup.position.set(x, 0, z); // Position the tree in the scene
+            return treeGroup;
+        }
+
+        function generateForest() {
+            const treeCount = 50; // Number of trees
+            for (let i = 0; i < treeCount; i++) {
+                const x = Math.random() * 200 - 100; // x: -100 to 100
+                const z = Math.random() * 200 - 100; // z: -100 to 100
+                const scale = Math.random() * 1.5 + 0.5; // Scale: 0.5 to 2
+                if (Math.abs(x) > 20 || Math.abs(z) > 20) { // Ensure trees are around the field
+                    const tree = createTree(x, z, scale);
+                    scene.add(tree);
+                }
+            }
+        }
+
+        function createHill(x, z, scale) {
+            const hillGeometry = new THREE.SphereGeometry(50, 50, 30); // Larger hills
+            const hillMaterial = new THREE.MeshStandardMaterial({ map: foliageTexture }); // Use foliage texture
+            const hill = new THREE.Mesh(hillGeometry, hillMaterial);
+            // sit slightly below surface level
+            hill.position.set(x, -8, z); // Adjusted position to make it visible
+            hill.scale.set(1, scale, 1);
+            return hill;
+        }
+
+        function generateHills() {
+            const hillCount = 50; // Number of hills (attempted)
+            for (let i = 0; i < hillCount; i++) {
+                const x = Math.random() * 300 - 150; // x: -300 to 300
+                const z = Math.random() * 300 - 150; // z: -300 to 300
+                const scale = Math.random() * 1.5 + 0.5; // Scale: 0.5 to 2
+                if (Math.abs(x) > 80 || Math.abs(z) > 80) { // Ensure trees are around the field
+                    const hill = createHill(x, z, scale);
+                    scene.add(hill);
+                }
+            }
+        }
+
+        // Generate forest and hills
+        generateForest();
+        generateHills();
+
         // Bottles
-        const bottleMaterial = new THREE.MeshToonMaterial({ color: 0x00ffff }); // Cyan bottles
+        const bottleMaterial = new THREE.MeshPhysicalMaterial({
+            color: 0xff9900,
+            metalness: 0,
+            roughness: 0.1,
+            transmission: 1, // Make it glass-like
+            opacity: 0.8,
+            transparent: true
+        });
+        const labelMaterial = new THREE.MeshToonMaterial({ color: 0x00ff00 }); // Green labels
+
         function createBottle(x, z) {
             const bottleGroup = new THREE.Group();
             const bodyGeometry = new THREE.CylinderGeometry(0.3, 0.3, 2, 32);
             const body = new THREE.Mesh(bodyGeometry, bottleMaterial);
             body.position.set(0, 1, 0); // Bottom at y=0, top at y=2 in group coords
+
             const neckGeometry = new THREE.CylinderGeometry(0.1, 0.1, 0.5, 32);
             const neck = new THREE.Mesh(neckGeometry, bottleMaterial);
             neck.position.set(0, 2.25, 0); // From y=2 to y=2.5
+
+            const labelGeometry = new THREE.PlaneGeometry(0.6, 0.4);
+            const label = new THREE.Mesh(labelGeometry, labelMaterial);
+            label.position.set(0, 1, 0.31); // Positioned on the front of the bottle
+            label.rotation.y = 0; // Rotate to face forward
+
             bottleGroup.add(body);
             bottleGroup.add(neck);
+            bottleGroup.add(label);
             bottleGroup.position.set(x, 5, z); // Bottom at y=5 (on fence)
             return bottleGroup;
         }
@@ -345,10 +462,13 @@
 
         function createShards(x, y, z) {
             const shardGroup = new THREE.Group();
-            const shardMaterial = new THREE.MeshToonMaterial({
-                color: 0x00ffff,
-                transparent: true,
-                opacity: 0.8
+            const shardMaterial = new THREE.MeshPhysicalMaterial({
+                color: 0xff9900, // Same color as the bottles
+                metalness: 0,
+                roughness: 0.1,
+                transmission: 1, // Make it glass-like
+                opacity: 0.8,
+                transparent: true
             });
             for (let i = 0; i < 10; i++) {
                 const shard = new THREE.Mesh(
@@ -376,6 +496,9 @@
             requestAnimationFrame(animate);
             camera.fov = isZoomed ? 20 : 75;
             crosshairs.style.display = isZoomed ? 'block' : 'none';
+            const zoomHint = document.getElementById('zoomHint');
+            zoomHint.style.display = isZoomed ? 'block' : 'block';
+            zoomHint.textContent = isZoomed ? 'CLICK to Fire' : 'SHIFT to zoom';
 
             clouds.forEach(cloud => {
                 cloud.position.x += 0.05;
